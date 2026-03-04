@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Toko Kirana
+
+    </title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Manajemen Warung</h1>
+    
+    <div class="box">
+        <h3>Tambah Stok</h3>
+        <input type="text" id="namaBarang" placeholder="Nama Barang">
+        <input type="number" id="jumlahBarang" placeholder="Jumlah">
+        <button onclick="tambahBarang()">Tambah</button>
+    </div>
+
+    <div class="box">
+        <h3>Daftar Stok Barang</h3>
+        <table id="tabelStok">
+            <tr>
+                <th>Barang</th>
+                <th>Jumlah</th>
+            </tr>
+            </table>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+<hr> <div class="box" style="background: #d1ffd1;">
+    <h3>Catat Keuangan</h3>
+    <input type="text" id="ketKeuangan" placeholder="Keterangan (misal: Jual Beras)">
+    <input type="number" id="jumlahUang" placeholder="Nominal (Rp)">
+    <br>
+    <button onclick="catatUang('masuk')" style="background: #27ae60;">Pemasukan (+)</button>
+    <button onclick="catatUang('keluar')" style="background: #e74c3c;">Pengeluaran (-)</button>
+</div>
+
+<div class="box">
+    <h3>Ringkasan Kas</h3>
+    <p>Total Pemasukan: <span id="totalMasuk">0</span></p>
+    <p>Total Pengeluaran: <span id="totalKeluar">0</span></p>
+    <h2 style="color: #2c3e50;">Saldo Akhir: <span id="saldo">0</span></h2>
+    <button onclick="resetKas()" style="background: gray; font-size: 10px;">Reset Kas</button>
+</div>
+<div class="box" style="width: 80%; max-width: 500px;">
+    <h3>Riwayat Transaksi</h3>
+    <table id="tabelRiwayat">
+        <tr>
+            <th>Keterangan</th>
+            <th>Nominal</th>
+            <th>Tipe</th>
+        </tr>
+        </table>
+</div>
