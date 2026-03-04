@@ -4,3 +4,30 @@ input { width: 80%; padding: 8px; margin: 5px; border: 1px solid #ccc; border-ra
 table { width: 100%; margin-top: 10px; border-collapse: collapse; }
 th, td { border-bottom: 1px solid #ddd; padding: 8px; }
 button { background: #27ae60; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
+/* KODE KHUSUS LAYAR HP (MOBILE) */
+@media (max-width: 600px) {
+    .box {
+        width: 90%; /* Kotak jadi selebar layar HP */
+        margin: 10px auto;
+        padding: 15px;
+    }
+
+    input {
+        width: 95%; /* Input jadi penuh agar mudah diketik jempol */
+        font-size: 16px; /* Ukuran pas agar browser tidak auto-zoom */
+    }
+
+    button {
+        width: 100%; /* Tombol jadi besar agar gampang diklik */
+        margin-bottom: 10px;
+        padding: 12px;
+    }
+
+    table {
+        font-size: 14px; /* Ukuran tabel diperkecil sedikit agar muat */
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+}
