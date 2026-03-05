@@ -53,6 +53,7 @@ function tambahBarang() {
 
 function tampilkanData() {
     let tabel = document.getElementById("tabelStok");
+    // Reset tabel ke judul
     tabel.innerHTML = `<tr><th>Barang</th><th>Jumlah</th><th>Aksi</th></tr>`;
 
     let listBarang = JSON.parse(localStorage.getItem("stokWarung")) || [];
@@ -63,20 +64,26 @@ function tampilkanData() {
         // Kolom Nama
         baris.insertCell(0).innerHTML = item.nama;
 
-        // Kolom Stok (Bisa di-klik untuk edit)
+        // Kolom Stok (Ada Tombol Cepat + dan -)
         let kolomStok = baris.insertCell(1);
-        kolomStok.innerHTML = `<input type="number" value="${item.stok}" 
-                               onchange="updateStok(${index}, this.value)" 
-                               style="width:50px; text-align:center; border:1px solid #ddd; border-radius:3px;">`;
+        kolomStok.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+                <button onclick="ubahStokCepat(${index}, -1)" style="padding: 2px 8px; background: #e67e22;">-</button>
+                <input type="number" value="${item.stok}" 
+                       onchange="updateStok(${index}, this.value)" 
+                       style="width: 40px; text-align: center; border: 1px solid #ddd;">
+                <button onclick="ubahStokCepat(${index}, 1)" style="padding: 2px 8px; background: #27ae60;">+</button>
+            </div>
+        `;
         
         // Efek warna kalau stok tipis
         if (parseInt(item.stok) <= 5) {
-            kolomStok.firstChild.style.color = "red";
-            kolomStok.firstChild.style.fontWeight = "bold";
+            kolomStok.querySelector('input').style.color = "red";
+            kolomStok.querySelector('input').style.fontWeight = "bold";
         }
 
-        // Tombol Hapus
-        let tombolHapus = `<button onclick="hapusBarang(${index})" style="background:#e74c3c; padding:2px 8px; font-size:12px;">Hapus</button>`;
+        // Tombol Hapus Permanen
+        let tombolHapus = `<button onclick="hapusBarang(${index})" style="background:#c0392b; padding:2px 8px; font-size:12px;">Hapus</button>`;
         baris.insertCell(2).innerHTML = tombolHapus;
     });
 }
@@ -96,47 +103,103 @@ function resetData() {
 // Panggil hitungKeuangan saat halaman pertama kali dibuka
 window.addEventListener('load', hitungKeuangan);
 
-function catatUang(tipe) {
-    let ket = document.getElementById("ketKeuangan").value;
-    let nominal = parseInt(document.getElementById("jumlahUang").value);
+function tambahTransaksi(tipe) {
+    let inputKet = document.getElementById("keterangan");
+    let inputJum = document.getElementById("jumlah"); // Pastikan id di HTML-mu 'jumlah' atau 'nominal'
 
-    if (ket === "" || isNaN(nominal)) {
-        alert("Isi keterangan dan jumlah uang yang benar ya!");
+    let ket = inputKet.value;
+    let jum = parseInt(inputJum.value);
+
+    if (ket === "" || isNaN(jum)) {
+        alert("Harap isi keterangan dan jumlah uang!");
         return;
     }
 
-    // Ambil data kas lama
+    // --- BAGIAN OTOMATIS KURANGI STOK ---
+    // Jika ada uang masuk, sistem cek apakah ada nama barang di keterangan
+    if (tipe === 'masuk') {
+        let listBarang = JSON.parse(localStorage.getItem("stokWarung")) || [];
+        let stokBerubah = false;
+
+        listBarang.forEach((item, index) => {
+            // Kalau di keterangan ada tulisan nama barang (misal: "beli beras")
+            if (ket.toLowerCase().includes(item.nama.toLowerCase())) {
+                let sisa = parseInt(item.stok) - 1;
+                listBarang[index].stok = sisa < 0 ? 0 : sisa;
+                stokBerubah = true;
+            }
+        });
+
+        if (stokBerubah) {
+            localStorage.setItem("stokWarung", JSON.stringify(listBarang));
+            tampilkanData(); // Refresh tabel stok agar angka langsung berkurang
+        }
+    }
+
+    // --- BAGIAN SIMPAN CATATAN KEUANGAN ---
     let dataKas = JSON.parse(localStorage.getItem("kasWarung")) || [];
+    dataKas.push({
+        keterangan: ket,
+        jumlah: jum,
+        tipe: tipe
+    });
 
-    // Simpan data baru
-    dataKas.push({ keterangan: ket, jumlah: nominal, tipe: tipe });
     localStorage.setItem("kasWarung", JSON.stringify(dataKas));
-
-    // Update angka di layar
-    hitungKeuangan();
     
     // Reset input
-    document.getElementById("ketKeuangan").value = "";
-    document.getElementById("jumlahUang").value = "";
+    inputKet.value = "";
+    inputJum.value = "";
+    
+    // Refresh tampilan keuangan
+    hitungKeuangan();
 }
 
 function hitungKeuangan() {
     let dataKas = JSON.parse(localStorage.getItem("kasWarung")) || [];
-    let tMasuk = 0;
-    let tKeluar = 0;
+    let historyKas = JSON.parse(localStorage.getItem("historyKasWarung")) || [];
+    
+    // --- FITUR AUTO-RESET SETIAP HARI ---
+    let tanggalSekarang           = new Date().toLocaleDateString();
+    let tanggalTerakhir = localStorage.getItem("tanggalSekarang");
 
-    dataKas.forEach(item => {
-        if (item.tipe === 'masuk') {
-            tMasuk += item.jumlah;
-        } else {
-            tKeluar += item.jumlah;
+    // Jika ini hari baru (tanggal di HP beda sama tanggal terakhir simpan)
+    if (tanggalTerakhir && tanggalTerakhir !== tanggalSekarang) {
+        // Pindahkan semua data kas hari ini ke dalam History
+        if (dataKas.length > 0) {
+            historyKas.push({
+                tanggal: tanggalTerakhir,
+                catatan: dataKas
+            });
+            localStorage.setItem("historyKasWarung", JSON.stringify(historyKas));
         }
+        
+        // Reset data kas hari ini jadi kosong
+        dataKas = [];
+        localStorage.setItem("kasWarung", JSON.stringify(dataKas));
+    }
+    
+    // Simpan tanggal hari ini sebagai patokan besok
+    localStorage.setItem("tanggalTerakhir", tanggalSekarang);
+    // ------------------------------------
+
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+
+    let html = `<tr><th>Keterangan</th><th>Jumlah</th></tr>`;
+    dataKas.forEach(item => {
+        html += `<tr>
+            <td>${item.keterangan}</td>
+            <td style="color: ${item.tipe === 'masuk' ? 'green' : 'red'}">
+                ${item.tipe === 'masuk' ? '+' : '-'} Rp ${item.jumlah.toLocaleString()}
+            </td>
+        </tr>`;
+
+        if (item.tipe === 'masuk') totalMasuk += item.jumlah;
+        else totalKeluar += item.jumlah;
     });
 
-    // Tampilkan ke layar
-    document.getElementById("totalMasuk").innerHTML = "Rp " + tMasuk.toLocaleString();
-    document.getElementById("totalKeluar").innerHTML = "Rp " + tKeluar.toLocaleString();
-    document.getElementById("saldo").innerHTML = "Rp " + (tMasuk - tKeluar).toLocaleString();
+    document.getElementById("tabelKas").innerHTML = html;
+    document.getElementById("totalSaldo").innerHTML = "Rp " + (totalMasuk - totalKeluar).toLocaleString();
 }
 
 function resetKas() {
@@ -191,4 +254,45 @@ function updateStok(index, jumlahBaru) {
     
     // Refresh tampilan agar warna merah (stok tipis) update otomatis
     tampilkanData();
+}
+function ubahStokCepat(index, perubahan) {
+    let listBarang = JSON.parse(localStorage.getItem("stokWarung")) || [];
+    
+    // Ambil nilai lama dan tambahkan perubahannya (+1 atau -1)
+    let stokBaru = parseInt(listBarang[index].stok) + perubahan;
+
+    // Jaga agar stok tidak minus (paling kecil 0)
+    if (stokBaru < 0) stokBaru = 0;
+
+    // Simpan ke laci
+    listBarang[index].stok = stokBaru;
+    localStorage.setItem("stokWarung", JSON.stringify(listBarang));
+    
+    // Refresh tabel agar angka berubah di layar
+    tampilkanData();
+}
+function lihatHistory() {
+    let historyKas = JSON.parse(localStorage.getItem("historyKasWarung")) || [];
+    let area = document.getElementById("areaHistory");
+
+    if (historyKas.length === 0) {
+        area.innerHTML = "<p>Belum ada sejarah catatan.</p>";
+        return;
+    }
+
+    let htmlHistory = "<h3>Sejarah Kas</h3>";
+    historyKas.reverse().forEach(hari => { // Pakai reverse supaya tanggal terbaru di atas
+        let totalHarian = 0;
+        htmlHistory += `<details style="border: 1px solid #ccc; padding: 10px; margin-bottom: 5px;">
+            <summary><b>Tanggal: ${hari.tanggal}</b></summary>
+            <ul>`;
+        
+        hari.catatan.forEach(item => {
+            htmlHistory += `<li>${item.keterangan}: Rp ${item.jumlah.toLocaleString()} (${item.tipe})</li>`;
+        });
+
+        htmlHistory += `</ul></details>`;
+    });
+
+    area.innerHTML = htmlHistory;
 }

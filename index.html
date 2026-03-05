@@ -34,11 +34,17 @@
 </html>
 <hr> <div class="box" style="background: #d1ffd1;">
     <h3>Catat Keuangan</h3>
-    <input type="text" id="ketKeuangan" placeholder="Keterangan (misal: Jual Beras)">
-    <input type="number" id="jumlahUang" placeholder="Nominal (Rp)">
-    <br>
-    <button onclick="catatUang('masuk')" style="background: #27ae60;">Pemasukan (+)</button>
-    <button onclick="catatUang('keluar')" style="background: #e74c3c;">Pengeluaran (-)</button>
+  <input type="text" id="keterangan" placeholder="Keterangan (Contoh: Jual Beras)">
+
+<input type="number" id="jumlah" placeholder="Jumlah Uang">
+
+<button onclick="tambahTransaksi('masuk')" style="background-color: #27ae60; color: white; border: none; padding: 10px; cursor: pointer;">
+    Uang Masuk (+)
+</button>
+
+<button onclick="tambahTransaksi('keluar')" style="background-color: #e74c3c; color: white; border: none; padding: 10px; cursor: pointer;">
+    Uang Keluar (-)
+</button>
 </div>
 
 <div class="box">
@@ -58,3 +64,8 @@
         </tr>
         </table>
 </div>
+<button onclick="lihatHistory()" style="margin-top: 10px; background: #34495e; color: white;">
+    Lihat Sejarah Kas
+</button>
+
+<div id="areaHistory" style="margin-top: 20px;"></div>
